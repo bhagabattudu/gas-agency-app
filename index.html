@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 <style>
 :root{
   --navy:#0d1b2a;--navy2:#1a2e45;--navy3:#243b55;
@@ -566,6 +565,191 @@ td.ok-cell{background:#f0fff6!important;color:#0b6e3f!important;}
 .settings-btn:hover{background:rgba(255,255,255,.15);color:#fff;}
 
 
+/* ── Firebase Auth overlay ────────────────────────────── */
+#fbAuthOverlay{
+  position:fixed;inset:0;z-index:99999;
+  background:var(--navy);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px;
+}
+#fbAuthOverlay.fb-hidden{display:none;}
+.fb-logo{width:64px;height:64px;border-radius:18px;background:var(--orange);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;color:#fff;box-shadow:0 8px 28px rgba(255,107,0,.4);margin-bottom:16px;}
+.fb-title{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;
+  color:#fff;letter-spacing:.5px;margin-bottom:6px;}
+.fb-sub{font-size:.8rem;color:var(--muted);margin-bottom:32px;text-align:center;}
+.fb-google-btn{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  background:#fff;border:none;border-radius:12px;
+  padding:14px 28px;font-size:1rem;font-weight:700;
+  font-family:'Barlow',sans-serif;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  transition:transform .12s,box-shadow .12s;
+  width:100%;max-width:300px;
+}
+.fb-google-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.fb-google-btn:active{transform:scale(.97);}
+.fb-google-btn svg{width:22px;height:22px;flex-shrink:0;}
+.fb-google-btn span{color:#1a1a2e;}
+.fb-error{margin-top:16px;font-size:.78rem;font-weight:700;
+  color:var(--red);min-height:20px;text-align:center;}
+.fb-loading{display:flex;flex-direction:column;align-items:center;gap:12px;
+  color:rgba(255,255,255,.5);font-size:.8rem;}
+.fb-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);
+  border-top-color:var(--orange);border-radius:50%;
+  animation:fb-spin .8s linear infinite;}
+@keyframes fb-spin{to{transform:rotate(360deg);}}
+.fb-sync-badge{display:flex;align-items:center;gap:5px;font-size:.62rem;
+  font-weight:700;padding:3px 8px;border-radius:20px;cursor:default;}
+.fb-sync-badge.synced{background:rgba(0,201,123,.15);color:#00c97b;}
+.fb-sync-badge.syncing{background:rgba(255,171,0,.15);color:var(--amber);}
+.fb-sync-badge.offline{background:rgba(255,59,92,.12);color:var(--red);}
+.fb-sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+/* ── Truck Refill Grid Layout ─────────────────────────── */
+.trk-header{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;
+  background:var(--navy);border-radius:10px;padding:11px 14px;margin-bottom:8px;}
+.trk-header span{color:#fff;font-size:.6rem;font-weight:800;letter-spacing:.7px;
+  text-transform:uppercase;text-align:center;}
+.trk-header span:first-child{text-align:left;color:rgba(255,255,255,.6);}
+.trk-header .trk-hdr-rcv{color:#5fffb0;}
+.trk-header .trk-hdr-ret{color:#ff8a8a;}
+.trk-row{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;
+  align-items:center;margin-bottom:10px;}
+.trk-cyl-name{font-size:.82rem;font-weight:700;color:var(--navy);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:7px;}
+.trk-cyl-dot{width:8px;height:8px;border-radius:50%;background:var(--orange);flex-shrink:0;}
+/* Base input */
+.trk-input{height:46px;padding:10px;border-radius:8px;border:1px solid #ccc;
+  text-align:center;font-size:16px;width:100%;box-sizing:border-box;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;color:var(--navy);
+  transition:all .15s;display:block;}
+.trk-input:focus{outline:none;box-shadow:0 0 0 3px rgba(0,0,0,.08);}
+/* GREEN = refill received */
+.trk-input.rcv-input{background:#e8f8ef;border:1px solid #28a745;color:#155724;}
+.trk-input.rcv-input:focus{border-color:#1e7e34;box-shadow:0 0 0 3px rgba(40,167,69,.15);}
+/* RED = empty returned */
+.trk-input.ret-input{background:#fdeaea;border:1px solid #dc3545;color:#721c24;}
+.trk-input.ret-input:focus{border-color:#c82333;box-shadow:0 0 0 3px rgba(220,53,69,.15);}
+@media(max-width:400px){
+  .trk-header,.trk-row{grid-template-columns:1.4fr 1fr 1fr;gap:8px;}
+  .trk-cyl-name{font-size:.74rem;}
+  .trk-input{height:42px;font-size:14px;padding:8px;}
+}
+/* ── Truck History Table ──────────────────────────────── */
+.trk-hist-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;}
+.trk-hist-table{width:100%;border-collapse:collapse;font-size:.72rem;min-width:560px;}
+.trk-hist-table th{background:var(--navy);color:rgba(255,255,255,.75);
+  font-size:.58rem;letter-spacing:.6px;text-transform:uppercase;
+  padding:8px 10px;white-space:nowrap;font-weight:800;}
+.trk-hist-table th:first-child{border-radius:0;}
+.trk-hist-table td{padding:8px 10px;border-bottom:1px solid var(--border);
+  white-space:nowrap;vertical-align:middle;}
+.trk-hist-table tr:last-child td{border-bottom:none;}
+.trk-hist-table tr:hover td{background:#f4f8ff;}
+.trk-hist-table .rcv-val{color:var(--green);font-weight:800;}
+.trk-hist-table .ret-val{color:var(--orange);font-weight:800;}
+.trk-hist-table .zero{color:var(--muted);font-weight:400;}
+/* ── Empty Return Module ─────────────────────────────── */
+.emp-ret-form{display:grid;gap:12px;}
+/* ── Physical Stock Count grid — matches truck refill style ── */
+.phys-hdr{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;
+  background:var(--navy);border-radius:10px;padding:11px 14px;margin-bottom:8px;}
+.phys-hdr span{color:rgba(255,255,255,.6);font-size:.6rem;font-weight:800;
+  letter-spacing:.7px;text-transform:uppercase;text-align:center;}
+.phys-hdr span:first-child{text-align:left;}
+.phys-hdr .phys-hdr-god{color:#7fd5ff;}
+.phys-hdr .phys-hdr-sto{color:#ffc971;}
+.stock-row{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;
+  align-items:center;margin-bottom:10px;}
+.phys-cyl-lbl{display:flex;align-items:center;gap:7px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.phys-cyl-dot{width:8px;height:8px;border-radius:50%;background:var(--orange);flex-shrink:0;}
+.phys-cyl-name{font-size:.82rem;font-weight:700;color:var(--navy);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stock-input,.phys-input{
+  width:100%;height:46px;padding:10px;border-radius:8px;
+  border:1px solid #ccc;font-size:16px;text-align:center;box-sizing:border-box;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;color:var(--navy);
+  background:#f4f7fc;transition:all .15s;display:block;}
+.stock-input:focus,.phys-input:focus{
+  outline:none;border-color:var(--orange);background:#fff;
+  box-shadow:0 0 0 3px rgba(255,107,0,.12);}
+.stock-input::placeholder,.phys-input::placeholder{
+  color:var(--muted);font-weight:400;font-size:.85rem;}
+@media(max-width:400px){
+  .phys-hdr,.stock-row{grid-template-columns:1.4fr 1fr 1fr;gap:8px;}
+  .phys-cyl-name{font-size:.74rem;}
+  .stock-input,.phys-input{height:42px;font-size:14px;padding:8px;}
+}
+
+/* Mismatch result rows */
+.mismatch-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:.82rem;}
+.mismatch-item.ok{background:#d4f7e7;color:#0b6e3f;}
+.mismatch-item.bad{background:#ffe0e6;color:#9b1c2e;}
+.mismatch-item .mi-diff{font-weight:900;font-size:.9rem;}
+
+/* Audit Report card */
+.audit-report-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;}
+.audit-report-head{background:linear-gradient(135deg,var(--navy),#1a2e40);color:#fff;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between;}
+.audit-report-head .arh-icon{color:var(--orange);}
+.audit-report-date{font-size:.68rem;background:rgba(255,255,255,.12);border-radius:20px;padding:2px 9px;}
+.audit-table{width:100%;border-collapse:collapse;}
+.audit-table th{padding:7px 12px;font-size:.63rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);text-align:left;}
+.audit-table td{padding:8px 12px;font-size:.8rem;border-bottom:1px solid var(--border);}
+.audit-table tr:last-child td{border-bottom:none;}
+.audit-table .at-label{font-weight:600;color:var(--navy);}
+.audit-table .at-val{font-weight:800;color:var(--navy);text-align:right;}
+.audit-table tr.at-opening td{background:#f8f9ff;}
+.audit-table tr.at-closing td{background:#f0fff6;}
+.audit-table tr.at-mismatch td{background:#fff0f3;}
+.at-badge{display:inline-block;border-radius:20px;padding:1px 8px;font-size:.65rem;font-weight:800;}
+.at-badge.green{background:#d4f7e7;color:#0b6e3f;}
+.at-badge.red{background:#ffe0e6;color:#9b1c2e;}
+.at-badge.blue{background:#e4f0ff;color:#1352a0;}
+.at-badge.amber{background:#fff3e0;color:#b06000;}
+
+/* ══════════════════════════════════════════════════════
+   GASTRACK SAAS v8 — Multi-Agency + Performance CSS
+══════════════════════════════════════════════════════ */
+
+/* Agency badge in header */
+.agency-badge{display:flex;align-items:center;gap:5px;cursor:pointer;}
+.ab-name{font-size:.68rem;font-weight:700;color:rgba(255,255,255,.75);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ab-plan{font-size:.52rem;background:var(--orange);color:#fff;border-radius:3px;padding:1px 4px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;}
+
+/* Role badge */
+.role-badge{display:inline-block;font-size:.55rem;border-radius:4px;padding:1px 5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;margin-left:3px;}
+.role-owner{background:#fff3e0;color:#b06000;}
+.role-manager{background:#e4f0ff;color:#1352a0;}
+
+/* Firebase sync dot */
+
+/* Agency Setup Modal */
+
+
+
+
+
+
+
+
+/* Virtual List for Consumers (50k support) */
+#consVirtList{overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;scroll-behavior:smooth;}
+.cvl-spacer{pointer-events:none;}
+.cons-row-vl{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.cons-row-vl:active{background:#f5f8ff;}
+.cons-cloud-tag{background:#e4f0ff;color:#1352a0;border-radius:20px;padding:2px 7px;font-size:.58rem;font-weight:900;white-space:nowrap;}
+
+/* Role-based visibility */
+
+/* Settings icon */
+.settings-btn{background:rgba(255,255,255,.08);border:none;border-radius:7px;color:rgba(255,255,255,.6);padding:5px 9px;cursor:pointer;font-size:.9rem;}
+.settings-btn:hover{background:rgba(255,255,255,.15);color:#fff;}
+
+
 /* ═══════════════════════════════════════════════════════
    SECURITY MODULE — PIN Lock Screen
 ═══════════════════════════════════════════════════════ */
@@ -714,81 +898,35 @@ td.ok-cell{background:#f0fff6!important;color:#0b6e3f!important;}
      SECURITY: PIN LOCK OVERLAY
      Shown on load and after inactivity timeout
 ═══════════════════════════════════════════════════ -->
-<div id="pinOverlay">
-  <div class="pin-logo"><i class="bi bi-shield-lock-fill"></i></div>
-  <div class="pin-title">GasTrack</div>
-  <div id="pinSubText" class="pin-sub">Enter your 6-digit PIN to continue</div>
-  <div id="pinSetupBadge" class="pin-setup-badge" style="display:none">
-    🔐 First time setup — create your PIN
-  </div>
-  <div class="pin-dots" id="pinDots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
-    <div class="pin-dot" id="pd4"></div>
-    <div class="pin-dot" id="pd5"></div>
-  </div>
-  <div class="pin-pad">
-    <button class="pin-btn" onclick="PinSecurity.press('1')">1<span class="pin-btn-sub"></span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('2')">2<span class="pin-btn-sub">ABC</span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('3')">3<span class="pin-btn-sub">DEF</span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('4')">4<span class="pin-btn-sub">GHI</span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('5')">5<span class="pin-btn-sub">JKL</span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('6')">6<span class="pin-btn-sub">MNO</span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('7')">7<span class="pin-btn-sub">PQRS</span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('8')">8<span class="pin-btn-sub">TUV</span></button>
-    <button class="pin-btn" onclick="PinSecurity.press('9')">9<span class="pin-btn-sub">WXYZ</span></button>
-    <button class="pin-btn pin-del" onclick="PinSecurity.backspace()"><i class="bi bi-delete"></i></button>
-    <button class="pin-btn" onclick="PinSecurity.press('0')">0</button>
-    <button class="pin-btn" onclick="PinSecurity.press('0')" style="display:none"></button>
-  </div>
-  <div id="pinMsg" class="pin-msg"></div>
-  <div class="pin-export-row">
-    <button class="pin-export-btn" onclick="PinSecurity.exportEncrypted()">
-      <i class="bi bi-download"></i> Export Encrypted Backup
+<!-- FIREBASE AUTH OVERLAY -->
+<div id="fbAuthOverlay">
+  <div class="fb-logo"><i class="bi bi-fire"></i></div>
+  <div class="fb-title">GasTrack</div>
+  <div class="fb-sub">Agency Management System</div>
+  <div id="fbSignInState">
+    <button class="fb-google-btn" onclick="GasFirebase.signIn()">
+      <svg viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.4 3.1l6.2-6.2C34.8 3 29.8 1 24 1 14.8 1 7 6.5 3.5 14.2l7.2 5.6C12.5 13.3 17.8 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.8c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9C43.5 37.5 46.5 31.5 46.5 24.5z"/>
+        <path fill="#FBBC05" d="M10.7 28.2C10.2 26.8 10 25.4 10 24s.2-2.8.7-4.2l-7.2-5.6C1.2 17.2 0 20.5 0 24s1.2 6.8 3.5 9.8l7.2-5.6z"/>
+        <path fill="#34A853" d="M24 47c5.8 0 10.7-1.9 14.3-5.1l-7.6-5.9c-1.9 1.3-4.3 2-6.7 2-6.2 0-11.5-3.8-13.3-9.8l-7.2 5.6C7 41.5 14.8 47 24 47z"/>
+      </svg>
+      <span>Continue with Google</span>
     </button>
-    <button class="pin-export-btn" onclick="PinSecurity.importEncrypted()">
-      <i class="bi bi-upload"></i> Import Backup
-    </button>
+    <div id="fbAuthError" class="fb-error"></div>
   </div>
-  <button class="pin-forgot" id="pinForgotBtn" onclick="PinSecurity.resetPin()" style="display:none">
-    Forgot PIN? Reset all data
-  </button>
+  <div id="fbLoadingState" class="fb-loading" style="display:none">
+    <div class="fb-spinner"></div>
+    <span id="fbLoadingMsg">Loading...</span>
+  </div>
 </div>
 
-<!-- Hidden file input for import -->
-<input type="file" id="pinImportFile" accept=".gtrack" style="display:none"
-  onchange="PinSecurity.processImport(this)"/>
-
-<div id="loginScreen">
+<div id="loginScreen" style="display:none">
   <div class="ls-logo"><i class="bi bi-fire"></i></div>
   <div class="ls-title">GasTrack</div>
   <div class="ls-sub">Agency Management System · Secure Access</div>
   <div class="ls-card">
-    <!-- Google Login -->
-    <div class="ls-section-title">Sign in with Google</div>
-    <button class="ls-google-btn" onclick="AuthModule.googleLogin()">
-      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.3 1.2 8.4 3.1l6.2-6.2C34.8 3 29.8 1 24 1 14.8 1 7 6.5 3.5 14.2l7.2 5.6C12.5 13.3 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.8c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9C43.5 37.5 46.5 31.5 46.5 24.5z"/><path fill="#FBBC05" d="M10.7 28.2C10.2 26.8 10 25.4 10 24s.2-2.8.7-4.2l-7.2-5.6C1.2 17.2 0 20.5 0 24s1.2 6.8 3.5 9.8l7.2-5.6z"/><path fill="#34A853" d="M24 47c5.8 0 10.7-1.9 14.3-5.1l-7.6-5.9c-1.9 1.3-4.3 2-6.7 2-6.2 0-11.5-3.8-13.3-9.8l-7.2 5.6C7 41.5 14.8 47 24 47z"/></svg>
-      Continue with Google
-    </button>
-    <!-- Divider -->
-    <div class="ls-divider"><span>or use Mobile OTP</span></div>
-    <!-- OTP Login -->
-    <div class="ls-section-title">Mobile OTP</div>
-    <div class="ls-otp-row">
-      <input type="tel" id="lsMobile" class="ls-input" placeholder="Enter 10-digit mobile" maxlength="10"/>
-      <button class="ls-send-btn" id="lsSendBtn" onclick="AuthModule.sendOtp()">Send OTP</button>
-    </div>
-    <div id="lsOtpField">
-      <input type="number" id="lsOtp" class="ls-input" placeholder="Enter 6-digit OTP" maxlength="6"/>
-      <button class="ls-btn ls-btn-primary" onclick="AuthModule.verifyOtp()" style="margin-top:4px">Verify & Login</button>
-    </div>
-    <div id="lsError" class="ls-error">Invalid OTP. Please try again.</div>
-    <div style="background:#fff8f3;border:1px solid rgba(255,107,0,.2);border-radius:10px;padding:10px 12px;margin-top:12px;">
-      <p style="font-size:.68rem;color:var(--navy);opacity:.6;margin:0 0 8px 0;">⚡ <b style="color:var(--orange)">Demo Mode</b> — OTP: <b style="color:var(--navy)">123456</b>. Data saved locally in browser.</p>
-      <button onclick="AuthModule.devSkip()" style="background:transparent;border:1.5px dashed var(--border);border-radius:8px;color:var(--muted);font-size:.65rem;font-weight:700;padding:6px 10px;cursor:pointer;width:100%;font-family:Barlow,sans-serif;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">⚙ Skip Login (Dev Mode)</button>
-    </div>
+    <!-- auth handled by fbAuthOverlay -->
   </div>
 </div>
 
@@ -815,7 +953,7 @@ td.ok-cell{background:#f0fff6!important;color:#0b6e3f!important;}
       </div>
     </div>
     <!-- Keep these hidden but present so JS doesn't crash -->
-    <span id="syncBadge" style="display:none"><span class="sync-dot"></span><span id="syncLabel"></span></span>    <span id="agencyBadgePlan" style="display:none"></span>
+    <span id="syncBadge" class="fb-sync-badge synced"><span class="fb-sync-dot"></span><span id="syncLabel">Connecting...</span></span>    <span id="agencyBadgePlan" style="display:none"></span>
     <div id="hdrDate" style="display:none"></div>
   </div>
 </header>
@@ -1477,11 +1615,6 @@ td.ok-cell{background:#f0fff6!important;color:#0b6e3f!important;}
 </div><!-- /desk-content -->
 </div><!-- /app-body-wrap -->
 
-<!-- LOCK BADGE (visible on dashboard, click to manually lock) -->
-<button class="pin-lock-badge" id="lockBadge" onclick="PinSecurity.lock()" title="Lock dashboard">
-  <i class="bi bi-lock-fill"></i> <span id="lockTimerDisp">Auto-lock in 10:00</span>
-</button>
-
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="bnav-item active" id="bn-dashboard" onclick="nav('dashboard')">
@@ -1504,6 +1637,10 @@ td.ok-cell{background:#f0fff6!important;color:#0b6e3f!important;}
   </button>
 </nav>
 
+<!-- Firebase SDK (loaded at end of body — ensures DOM ready before init) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-firestore-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ── Safe console guard (some WebView environments lack console methods) ─
@@ -1558,14 +1695,7 @@ const _saas = (() => {
 
 // ─── DATA LOAD (agency-scoped with backward-compat fallback) ─────────
 const _lsGet = (agencyKey, legacyKey) => {
-  const raw = localStorage.getItem(agencyKey) || localStorage.getItem(legacyKey) || null;
-  if (!raw) return null;
-  // Try decryption first; fall back to raw (handles migration from unencrypted data)
-  if (typeof SecureStore !== 'undefined' && SecureStore.ready()) {
-    const dec = SecureStore.decrypt(raw);
-    return dec !== null ? dec : raw;
-  }
-  return raw;
+  return localStorage.getItem(agencyKey) || localStorage.getItem(legacyKey) || null;
 };
 let stock      = JSON.parse(_lsGet(_saas.key('stock'),      'gt_stock')      || 'null') || defaultStock();
 let deliveries = JSON.parse(_lsGet(_saas.key('deliveries'), 'gt_deliveries') || '[]');
@@ -1574,24 +1704,14 @@ let transfers  = JSON.parse(_lsGet(_saas.key('transfer'),   'gt_transfer')   || 
 
 const save = () => {
   const k = _saas.key;
-  // Use SecureStore if available (PIN set), else plain JSON
-  const _enc = (val) => (typeof SecureStore !== 'undefined' && SecureStore.ready())
-    ? SecureStore.encrypt(JSON.stringify(val))
-    : JSON.stringify(val);
-
-  localStorage.setItem(k('stock'),      _enc(stock));
-  localStorage.setItem(k('deliveries'), _enc(deliveries));
-  localStorage.setItem(k('truck'),      _enc(truckRefills));
-  localStorage.setItem(k('transfer'),   _enc(transfers));
-  // Legacy keys (default agency backward compat)
-  if (_saas.agencyId === 'default') {
-    localStorage.setItem('gt_stock',      _enc(stock));
-    localStorage.setItem('gt_deliveries', _enc(deliveries));
-    localStorage.setItem('gt_truck',      _enc(truckRefills));
-    localStorage.setItem('gt_transfer',   _enc(transfers));
-  }
+  try {
+    localStorage.setItem(k('stock'),      JSON.stringify(stock));
+    localStorage.setItem(k('deliveries'), JSON.stringify(deliveries));
+    localStorage.setItem(k('truck'),      JSON.stringify(truckRefills));
+    localStorage.setItem(k('transfer'),   JSON.stringify(transfers));
+  } catch(e) {}
   StockSnapshot.updateIfNewDay();
-  if (typeof FirebaseService !== 'undefined') FirebaseService.queueSync();
+  if (typeof GasFirebase !== 'undefined') GasFirebase.saveAll(false);
 };
 
 // Reload all data for a new agency (called after login/agency switch)
@@ -2874,170 +2994,32 @@ const AnalyticsModule = (() => {
 // ═══════════════════════════════════════════════════════════════════
 const AuthModule = (() => {
   'use strict';
-
-  const LS_KEY    = 'gt_auth_session';
-  let _otpSent    = null;  // simulated OTP code
-  let _otpMobile  = null;
-
-  // ── Load stored session ──────────────────────────────────────
-  const init = () => {
-    const sess = _getSession();
-    if (sess && sess.user) {
-      _applySession(sess);
-    }
-    // Always show login screen initially for demo
-    // (Comment the next line to keep session across reloads)
-    // _showApp();
-  };
-
-  const _getSession = () => {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); }
-    catch(e) { return null; }
-  };
-
-  const _saveSession = (user) => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ user, ts: Date.now() })); }
-    catch(e) {}
-  };
-
-  const _applySession = (sess) => {
-    const chip  = document.getElementById('userChip');
-    const avt   = document.getElementById('userAvatar');
-    const uname = document.getElementById('userName');
-    const rb    = document.getElementById('roleBadge');
-    const ab    = document.getElementById('agencyBadge');
-    const abName= document.getElementById('agencyBadgeName');
-    const role  = sess.user.role || 'owner';
-    const aname = sess.user.agencyName || 'My Agency';
-    if (chip)  chip.style.display  = 'flex';
-    if (avt)   avt.textContent     = (sess.user.name || 'U')[0].toUpperCase();
-    if (uname) uname.textContent   = sess.user.ownerName || sess.user.name || 'User';
-    if (rb) { rb.textContent = role.charAt(0).toUpperCase()+role.slice(1); rb.style.display='inline'; rb.className='role-badge role-'+role; }
-    if (ab) { ab.style.display = 'flex'; if(abName) abName.textContent = aname || 'My Agency'; }
-    // Apply role class on body for CSS-based role restrictions
-    document.body.className = (document.body.className.replace(/role-\S+/g,'')+' role-'+role).trim();
-    // Check if this agency needs setup
-    const needsSetup = localStorage.getItem('gt_needs_setup_' + (sess.user.agencyId||''));
-    if (needsSetup === '1' && !sess.user.agencyName) {
-      setTimeout(() => AgencyModule.openSetup(), 800);
-    }
-    _showApp();
-  };
-
   const _showApp = () => {
     const ls = document.getElementById('loginScreen');
-    if (ls) ls.classList.add('ls-hidden');
-    // refresh() called centrally in boot sequence — avoid calling twice
-    if (typeof refresh === 'function') setTimeout(refresh, 50);
+    if (ls) ls.style.display = 'none';
   };
-
-  // ── Google login (simulated) ─────────────────────────────────
-  const googleLogin = () => {
-    // In production: use Google Identity Services (GIS) library
-    // For prototype: simulate with a demo account after 800ms
-    const btn = document.querySelector('.ls-google-btn');
-    if (btn) { btn.textContent = '⏳ Signing in…'; btn.disabled = true; }
-
-    setTimeout(() => {
-      const _agId = _getOrCreateAgencyId('google_demo');
-      const _aName = _getStoredAgencyName('google_demo');
-      const user = { name: 'Agency Admin', email: 'admin@agency.demo', method: 'google',
-                     agencyId: _agId, role: 'owner', agencyName: _aName, ownerName: 'Agency Admin' };
-      _saveSession(user);
-      _applySession({ user });
-    }, 900);
+  const _applyUser = (fbUser) => {
+    const name = fbUser.displayName || fbUser.email.split('@')[0];
+    const chip = document.getElementById('userChip');
+    const avt  = document.getElementById('userAvatar');
+    const un   = document.getElementById('userName');
+    const rb   = document.getElementById('roleBadge');
+    const ab   = document.getElementById('agencyBadge');
+    if (chip) chip.style.display = 'flex';
+    if (avt)  avt.textContent    = name[0].toUpperCase();
+    if (un)   un.textContent     = name;
+    if (rb) { rb.textContent = 'Owner'; rb.className = 'role-badge role-owner'; rb.style.display='inline'; }
+    if (ab)   ab.style.display   = 'flex';
+    document.body.className = (document.body.className.replace(/role-\S+/g,'') + ' role-owner').trim();
+    _showApp();
   };
-
-  // ── OTP send (simulated) ─────────────────────────────────────
-  const sendOtp = () => {
-    const mob = (document.getElementById('lsMobile')?.value || '').trim();
-    if (mob.length !== 10 || !/^\d+$/.test(mob)) {
-      _showErr('Enter a valid 10-digit mobile number.');
-      return;
-    }
-    _otpMobile = mob;
-    _otpSent   = '123456';  // fixed demo OTP
-    // Firebase Phone Auth override (when configured)
-    if (typeof FirebaseService !== 'undefined' && FirebaseService.isReady()) {
-      FirebaseService.sendPhoneOtp('+91' + mob)
-        .catch(err => console.warn('FB Phone OTP error (using demo):', err.message));
-    }
-
-    const field = document.getElementById('lsOtpField');
-    const btn   = document.getElementById('lsSendBtn');
-    if (field) field.style.display = 'block';
-    if (btn)   { btn.disabled = true; btn.textContent = 'Sent ✓'; }
-
-    _hideErr();
-    // Show toast in app (may not be visible) — just use alert-style hint
-    const errEl = document.getElementById('lsError');
-    if (errEl) { errEl.style.display = 'block'; errEl.style.color = 'var(--green)'; errEl.textContent = '✓ Demo OTP: 123456 (prototype mode)'; }
-  };
-
-  // ── OTP verify ───────────────────────────────────────────────
-  const verifyOtp = () => {
-    const entered = (document.getElementById('lsOtp')?.value || '').trim();
-    if (!_otpSent) { _showErr('Please request OTP first.'); return; }
-    if (entered !== _otpSent) { _showErr('Invalid OTP. Hint: 123456'); return; }
-
-    const _agId = _getOrCreateAgencyId(_otpMobile);
-    const _role = _getStoredRole(_otpMobile);
-    const _aName = _getStoredAgencyName(_otpMobile);
-    const user = { name: _aName ? _aName+' Admin' : 'User ('+_otpMobile+')', 
-                   mobile: _otpMobile, method: 'otp', agencyId: _agId, role: _role,
-                   agencyName: _aName, ownerName: _aName ? '' : '' };
-    _saveSession(user);
-    _applySession({ user });
-  };
-
-  const _showErr = (msg) => {
-    const el = document.getElementById('lsError');
-    if (el) { el.style.display = 'block'; el.style.color = 'var(--red)'; el.textContent = msg; }
-  };
-  const _hideErr = () => {
-    const el = document.getElementById('lsError');
-    if (el) el.style.display = 'none';
-  };
-
-  // ── Logout ───────────────────────────────────────────────────
-  const showLogout = () => {
-    if (confirm('Logout from GasTrack?')) {
-      localStorage.removeItem(LS_KEY);
-      location.reload();
-    }
-  };
-
-  // ── Agency ID helpers ─────────────────────────────────────────
-  const _getOrCreateAgencyId = (key) => {
-    const lsKey = `gt_agency_id_${key}`;
-    let id = localStorage.getItem(lsKey);
-    if (!id) {
-      id = 'ag_' + key.replace(/\W/g,'_') + '_' + Date.now();
-      localStorage.setItem(lsKey, id);
-      // Flag new agency needs setup
-      localStorage.setItem('gt_needs_setup_' + id, '1');
-    }
-    return id;
-  };
-  const _getStoredRole = (key) => {
-    const id = localStorage.getItem(`gt_agency_id_${key}`) || '';
-    const role = localStorage.getItem('gt_agency_role_' + id) || 'owner';
-    // Only owner and manager are valid roles
-    return (role === 'owner' || role === 'manager') ? role : 'owner';
-  };
-  const _getStoredAgencyName = (key) => {
-    const id = localStorage.getItem(`gt_agency_id_${key}`) || '';
-    return localStorage.getItem('gt_agency_name_' + id) || '';
-  };
-
-  const devSkip = () => {
-    const _agId = _getOrCreateAgencyId('dev');
-    const _aName = _getStoredAgencyName('dev');
-    const user = { name: 'Developer', method: 'dev', agencyId: _agId, role: 'owner', agencyName: _aName };
-    _saveSession(user);
-    _applySession({ user });
-  };
-  return { init, googleLogin, sendOtp, verifyOtp, showLogout, devSkip };
+  const showLogout  = () => { if (confirm('Sign out?')) GasFirebase.signOut(); };
+  const googleLogin = () => GasFirebase.signIn();
+  const sendOtp = () => {};
+  const verifyOtp = () => {};
+  const devSkip   = () => {};
+  const init      = () => {};
+  return { googleLogin, sendOtp, verifyOtp, showLogout, devSkip, init, _applyUser };
 })();
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3856,368 +3838,168 @@ refresh();
 
 
 
-// ═══════════════════════════════════════════════════════════════════
-// SECURE STORE — AES-256 encryption layer using CryptoJS
-// Key derived from PIN via SHA-256
-// All business data encrypted at rest in localStorage
-// ═══════════════════════════════════════════════════════════════════
-const SecureStore = (() => {
-  'use strict';
-  const PIN_HASH_KEY = 'gt_pin_hash';  // stores SHA-256 of PIN (never PIN itself)
-  const ENC_PREFIX   = 'ENC::';        // prefix to identify encrypted values
-  let _key = null;                      // AES key (in-memory only, cleared on lock)
-
-  const ready     = ()  => _key !== null && typeof CryptoJS !== 'undefined';
-  const hasPinSet = ()  => !!localStorage.getItem(PIN_HASH_KEY);
-
-  // Derive AES key from PIN using SHA-256
-  const _deriveKey = (pin) =>
-    CryptoJS.SHA256(pin + 'gt_salt_v1').toString();
-
-  // Save PIN hash (for future verification) + activate key
-  const setPin = (pin) => {
-    const hash = _deriveKey(pin);
-    localStorage.setItem(PIN_HASH_KEY, hash);
-    _key = hash;
-  };
-
-  // Verify PIN and activate key
-  const verifyPin = (pin) => {
-    const stored = localStorage.getItem(PIN_HASH_KEY);
-    if (!stored) return false;
-    const hash = _deriveKey(pin);
-    if (hash !== stored) return false;
-    _key = hash;
-    return true;
-  };
-
-  // Clear key from memory (lock)
-  const lock = () => { _key = null; };
-
-  // Encrypt string value
-  const encrypt = (plaintext) => {
-    if (!ready()) return plaintext;
-    try {
-      const cipher = CryptoJS.AES.encrypt(plaintext, _key).toString();
-      return ENC_PREFIX + cipher;
-    } catch (e) { return plaintext; }
-  };
-
-  // Decrypt — returns null if decryption fails
-  const decrypt = (ciphertext) => {
-    if (!ciphertext) return null;
-    // Not encrypted (legacy plain data)
-    if (!ciphertext.startsWith(ENC_PREFIX)) return ciphertext;
-    if (!ready()) return null;
-    try {
-      const cipher  = ciphertext.slice(ENC_PREFIX.length);
-      const bytes   = CryptoJS.AES.decrypt(cipher, _key);
-      const plain   = bytes.toString(CryptoJS.enc.Utf8);
-      return plain || null;
-    } catch (e) { return null; }
-  };
-
-  // Export ALL app data as encrypted JSON blob (.gtrack file)
-  const exportAll = () => {
-    if (!ready()) { alert('Unlock the app first before exporting.'); return null; }
-    const payload = {
-      v: 1, ts: new Date().toISOString(), app: 'GasTrack',
-      data: {
-        stock:       JSON.stringify(stock),
-        deliveries:  JSON.stringify(deliveries),
-        truckRefills:JSON.stringify(truckRefills),
-        transfers:   JSON.stringify(transfers),
-      }
-    };
-    const json    = JSON.stringify(payload);
-    const cipher  = ENC_PREFIX + CryptoJS.AES.encrypt(json, _key).toString();
-    return cipher;
-  };
-
-  // Import from encrypted .gtrack file
-  const importAll = (ciphertext) => {
-    if (!ready()) { return { ok: false, msg: 'Unlock the app first.' }; }
-    if (!ciphertext.startsWith(ENC_PREFIX)) {
-      return { ok: false, msg: 'Invalid backup file format.' };
-    }
-    try {
-      const cipher = ciphertext.slice(ENC_PREFIX.length);
-      const bytes  = CryptoJS.AES.decrypt(cipher, _key);
-      const plain  = bytes.toString(CryptoJS.enc.Utf8);
-      if (!plain)  return { ok: false, msg: 'Wrong PIN or corrupted file.' };
-      const payload = JSON.parse(plain);
-      if (!payload.data) return { ok: false, msg: 'Invalid backup structure.' };
-      return { ok: true, payload };
-    } catch (e) { return { ok: false, msg: 'Decryption failed: ' + e.message }; }
-  };
-
-  // Re-encrypt ALL existing localStorage data with new key (call after PIN set)
-  const migrateExisting = () => {
-    if (!ready()) return;
-    const keys = ['gt_stock','gt_deliveries','gt_truck','gt_transfer'];
-    const agKeys = ['stock','deliveries','truck','transfer'].map(k => _saas.key(k));
-    [...keys, ...agKeys].forEach(k => {
-      const raw = localStorage.getItem(k);
-      if (raw && !raw.startsWith(ENC_PREFIX)) {
-        // It's plain JSON — encrypt it now
-        localStorage.setItem(k, encrypt(raw));
-      }
-    });
-  };
-
-  return { ready, hasPinSet, setPin, verifyPin, lock, encrypt, decrypt, exportAll, importAll, migrateExisting };
-})();
-
 
 // ═══════════════════════════════════════════════════════════════════
-// PIN SECURITY — UI controller for PIN overlay + auto-lock
+// GAS FIREBASE — Auth + Firestore
 // ═══════════════════════════════════════════════════════════════════
-const PinSecurity = (() => {
+const GasFirebase = (() => {
   'use strict';
 
-  const AUTO_LOCK_MS  = 10 * 60 * 1000;  // 10 minutes
-  const PIN_LENGTH    = 6;
+  const ALLOWED = 'bhagabattudu1999@gmail.com';
+  let _auth = null, _db = null, _user = null, _timer = null;
 
-  let _buffer      = '';     // current PIN digits entered
-  let _mode        = 'verify'; // 'verify' | 'setup' | 'confirm'
-  let _setupFirst  = '';     // first entry during setup
-  let _lockTimer   = null;
-  let _countdown   = null;
-  let _remaining   = AUTO_LOCK_MS;
-  let _isLocked    = true;
+  const _el  = (id) => document.getElementById(id);
+  const _ov  = () => _el('fbAuthOverlay');
+  const _si  = () => _el('fbSignInState');
+  const _ld  = () => _el('fbLoadingState');
+  const _err = () => _el('fbAuthError');
+  const _lm  = () => _el('fbLoadingMsg');
+  const _sb  = () => _el('syncBadge');
+  const _sl  = () => _el('syncLabel');
 
-  // ── DOM helpers ────────────────────────────────────────────────
-  const _overlay  = () => document.getElementById('pinOverlay');
-  const _msg      = () => document.getElementById('pinMsg');
-  const _subdiv   = () => document.getElementById('pinSubText');
-  const _badge    = () => document.getElementById('pinSetupBadge');
-  const _forgot   = () => document.getElementById('pinForgotBtn');
-  const _lockDisp = () => document.getElementById('lockTimerDisp');
-  const _lockBadge= () => document.getElementById('lockBadge');
+  const _showSign  = () => { _ov() && _ov().classList.remove('fb-hidden'); _si() && (_si().style.display='block'); _ld() && (_ld().style.display='none'); };
+  const _hideOv    = () => { _ov() && _ov().classList.add('fb-hidden'); };
+  const _showLoad  = (m) => { _si() && (_si().style.display='none'); _ld() && (_ld().style.display='flex'); _lm() && (_lm().textContent=m||'Loading...'); };
+  const _setSync   = (cls, lbl) => { const b=_sb(),l=_sl(); if(b){b.className='fb-sync-badge '+cls;} if(l)l.textContent=lbl; };
 
-  // ── Dot animation ──────────────────────────────────────────────
-  const _updateDots = (len, state) => {
-    for (let i = 0; i < PIN_LENGTH; i++) {
-      const d = document.getElementById('pd' + i);
-      if (!d) continue;
-      d.className = 'pin-dot' + (i < len ? ' filled' : '') + (state ? ' ' + state : '');
+  const signIn = async () => {
+    if (!_auth) return;
+    if (_err()) _err().textContent = '';
+    _showLoad('Signing in with Google...');
+    try {
+      const p = new firebase.auth.GoogleAuthProvider();
+      await _auth.signInWithPopup(p);
+    } catch(e) {
+      _showSign();
+      if (_err()) _err().textContent = e.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.' : e.message;
     }
   };
 
-  // ── Show/hide overlay ──────────────────────────────────────────
-  const show = () => {
-    const ov = _overlay();
-    if (ov) { ov.classList.remove('pin-hidden'); }
-    _isLocked = true;
-    if (_lockBadge()) _lockBadge().style.display = 'none';
-    _buffer = '';
-    _updateDots(0);
-    _setMode(SecureStore.hasPinSet() ? 'verify' : 'setup');
+  const signOut = async () => {
+    _setSync('offline','Offline');
+    if (_auth) await _auth.signOut();
+    _user = null;
+    _showSign();
+    document.querySelector('.app-header') && (document.querySelector('.app-header').style.display = 'none');
+    document.querySelectorAll('.bottom-nav,.desk-sidebar,.desk-tabs').forEach(el => el && (el.style.display='none'));
   };
 
-  const hide = () => {
-    const ov = _overlay();
-    if (!ov) return;
-    ov.classList.add('pin-hidden');
-    _isLocked = false;
-    if (_lockBadge()) _lockBadge().style.display = 'flex';
-    _startAutoLock();
-  };
-
-  // ── Mode text ──────────────────────────────────────────────────
-  const _setMode = (mode) => {
-    _mode = mode;
-    _msg().textContent = '';
-    if (mode === 'setup') {
-      _subdiv().textContent = 'Create a 6-digit PIN for this device';
-      _badge().style.display = 'block';
-      _forgot().style.display = 'none';
-    } else if (mode === 'confirm') {
-      _subdiv().textContent = 'Re-enter PIN to confirm';
-      _badge().style.display = 'none';
-    } else {
-      _subdiv().textContent = 'Enter your 6-digit PIN to continue';
-      _badge().style.display = 'none';
-      _forgot().style.display = 'block';
-    }
-  };
-
-  // ── Keypad press ───────────────────────────────────────────────
-  const press = (digit) => {
-    if (_buffer.length >= PIN_LENGTH) return;
-    _buffer += digit;
-    _updateDots(_buffer.length);
-    _msg().textContent = '';
-    if (_buffer.length === PIN_LENGTH) {
-      setTimeout(_submit, 120); // slight delay for last dot animation
-    }
-  };
-
-  const backspace = () => {
-    _buffer = _buffer.slice(0, -1);
-    _updateDots(_buffer.length);
-    _msg().textContent = '';
-  };
-
-  // ── Submit PIN ─────────────────────────────────────────────────
-  const _submit = () => {
-    const pin = _buffer;
-    _buffer = '';
-
-    if (_mode === 'setup') {
-      _setupFirst = pin;
-      _updateDots(0);
-      _setMode('confirm');
-      return;
-    }
-
-    if (_mode === 'confirm') {
-      if (pin !== _setupFirst) {
-        _updateDots(PIN_LENGTH, 'error');
-        setTimeout(() => { _updateDots(0); _setMode('setup'); }, 800);
-        _msg().textContent = 'PINs do not match. Start over.';
-        _setupFirst = '';
-        return;
+  const loadAll = async (uid) => {
+    _setSync('syncing','Loading...');
+    try {
+      const snap = await _db.collection('gastrack_users').doc(uid).get();
+      if (snap.exists) {
+        const d = snap.data();
+        if (d.stock)        { stock        = d.stock;        localStorage.setItem(_saas.key('stock'),      JSON.stringify(stock)); }
+        if (d.deliveries)   { deliveries   = d.deliveries;   localStorage.setItem(_saas.key('deliveries'), JSON.stringify(deliveries)); }
+        if (d.truckRefills) { truckRefills = d.truckRefills; localStorage.setItem(_saas.key('truck'),      JSON.stringify(truckRefills)); }
+        if (d.transfers)    { transfers    = d.transfers;    localStorage.setItem(_saas.key('transfer'),   JSON.stringify(transfers)); }
+      } else {
+        await saveAll(true);
       }
-      SecureStore.setPin(pin);
-      SecureStore.migrateExisting(); // encrypt existing plain data
-      _updateDots(PIN_LENGTH, 'success');
-      setTimeout(() => { _msg().textContent = ''; hide(); }, 500);
-      return;
-    }
-
-    // mode === 'verify'
-    if (SecureStore.verifyPin(pin)) {
-      _updateDots(PIN_LENGTH, 'success');
-      setTimeout(() => { hide(); }, 400);
-    } else {
-      _updateDots(PIN_LENGTH, 'error');
-      setTimeout(() => _updateDots(0), 700);
-      _msg().textContent = 'Incorrect PIN. Try again.';
+      _setSync('synced','Synced');
+      StockSnapshot.forceToday();
+      refresh();
+      _hideOv();
+    } catch(e) {
+      console.error('Firestore load:', e);
+      _setSync('offline','Offline');
+      StockSnapshot.forceToday();
+      refresh();
+      _hideOv();
+      toast('Cloud load failed — using local cache', 'error');
     }
   };
 
-  // ── Auto-lock: timer + countdown ──────────────────────────────
-  const _resetTimer = () => {
-    _remaining = AUTO_LOCK_MS;
-  };
-
-  const _startAutoLock = () => {
-    _clearTimers();
-    _remaining = AUTO_LOCK_MS;
-    _lockTimer = setTimeout(() => { lock(); }, AUTO_LOCK_MS);
-    // Countdown display: tick every second
-    _countdown = setInterval(() => {
-      _remaining -= 1000;
-      const disp = _lockDisp();
-      if (disp) {
-        const m = String(Math.floor(_remaining / 60000)).padStart(2,'0');
-        const s = String(Math.floor((_remaining % 60000) / 1000)).padStart(2,'0');
-        disp.textContent = `Auto-lock in ${m}:${s}`;
-      }
-    }, 1000);
-  };
-
-  const _clearTimers = () => {
-    if (_lockTimer)  { clearTimeout(_lockTimer);  _lockTimer = null;  }
-    if (_countdown)  { clearInterval(_countdown); _countdown = null;  }
-  };
-
-  // ── Activity detection ─────────────────────────────────────────
-  const _onActivity = () => {
-    if (_isLocked) return;
-    _clearTimers();
-    _startAutoLock();
-  };
-
-  // ── Public: lock dashboard ─────────────────────────────────────
-  const lock = () => {
-    _clearTimers();
-    SecureStore.lock();
-    _isLocked = true;
-    show();
-  };
-
-  // ── Public: reset PIN (clears ALL data) ───────────────────────
-  const resetPin = () => {
-    const confirmed = confirm(
-      'WARNING: Resetting PIN will DELETE all locally stored data (stock, deliveries, etc.). This cannot be undone. Continue?'
-    );
-    if (!confirmed) return;
-    const double = confirm('Are you absolutely sure? All data will be lost.');
-    if (!double) return;
-    localStorage.clear();
-    location.reload();
-  };
-
-  // ── Export encrypted backup ────────────────────────────────────
-  const exportEncrypted = () => {
-    const cipher = SecureStore.exportAll();
-    if (!cipher) return;
-    const blob = new Blob([cipher], { type: 'text/plain' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `gastrack_backup_${new Date().toISOString().split('T')[0]}.gtrack`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('✓ Encrypted backup downloaded (.gtrack)');
-  };
-
-  // ── Import encrypted backup ────────────────────────────────────
-  const importEncrypted = () => {
-    const fi = document.getElementById('pinImportFile');
-    if (fi) { fi.value = ''; fi.click(); }
-  };
-
-  const processImport = (input) => {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = SecureStore.importAll(e.target.result);
-      if (!result.ok) { alert('Import failed: ' + result.msg); return; }
-      const { data } = result.payload;
-      // Confirm overwrite
-      if (!confirm('This will replace ALL current data with the backup. Continue?')) return;
+  const saveAll = (immediate) => {
+    if (!_user) return;
+    if (_timer) clearTimeout(_timer);
+    const doSave = async () => {
+      _setSync('syncing','Saving...');
       try {
-        const _enc = (v) => SecureStore.ready() ? SecureStore.encrypt(v) : v;
-        if (data.stock)        localStorage.setItem(_saas.key('stock'),       _enc(data.stock));
-        if (data.deliveries)   localStorage.setItem(_saas.key('deliveries'),  _enc(data.deliveries));
-        if (data.truckRefills) localStorage.setItem(_saas.key('truck'),       _enc(data.truckRefills));
-        if (data.transfers)    localStorage.setItem(_saas.key('transfer'),    _enc(data.transfers));
-        toast('✓ Backup imported successfully. Reloading...');
-        setTimeout(() => location.reload(), 1200);
-      } catch (err) { alert('Import error: ' + err.message); }
+        await _db.collection('gastrack_users').doc(_user.uid).set({
+          stock, deliveries, truckRefills, transfers,
+          lastSaved: new Date().toISOString(),
+          email: _user.email
+        });
+        _setSync('synced','Synced');
+      } catch(e) {
+        console.error('Firestore save:', e);
+        _setSync('offline','Save failed');
+      }
     };
-    reader.readAsText(file);
+    if (immediate) doSave(); else _timer = setTimeout(doSave, 1500);
   };
 
-  // ── Keyboard support ──────────────────────────────────────────
-  const _onKey = (e) => {
-    if (_isLocked) {
-      if (e.key >= '0' && e.key <= '9') press(e.key);
-      if (e.key === 'Backspace') backspace();
+  const _onAuth = async (user) => {
+    if (!user) { _user=null; _showSign(); return; }
+    if (user.email.toLowerCase() !== ALLOWED.toLowerCase()) {
+      _showSign();
+      if (_err()) _err().textContent = 'Access denied: ' + user.email;
+      await _auth.signOut();
+      return;
+    }
+    _user = user;
+    _showLoad('Loading your data...');
+    AuthModule._applyUser(user);
+    await loadAll(user.uid);
+  };
+
+  const init = () => {
+    // Safety check — Firebase SDK must be loaded
+    if (typeof firebase === 'undefined') {
+      console.error('Firebase SDK not loaded. Check internet connection.');
+      // Retry after 3 seconds (CDN might still be loading)
+      if (_err()) _err().textContent = 'Loading Firebase... please wait.';
+      setTimeout(() => {
+        if (typeof firebase !== 'undefined') {
+          if (_err()) _err().textContent = '';
+          init();
+        } else {
+          if (_err()) _err().textContent =
+            'Firebase could not load. Make sure you have internet and reload the page.';
+        }
+      }, 3000);
+      return;
+    }
+    try {
+      firebase.initializeApp({
+        apiKey:            "AIzaSyBa--BTPVvLBq4wfCJoUKXTbIZwKKdN2zE",
+        authDomain:        "gasagency-b0723.firebaseapp.com",
+        projectId:         "gasagency-b0723",
+        storageBucket:     "gasagency-b0723.firebasestorage.app",
+        messagingSenderId: "179078142870",
+        appId:             "1:179078142870:web:28e76003a3c2a6f18b9bb7"
+      });
+      _auth = firebase.auth();
+      _db   = firebase.firestore();
+      _auth.onAuthStateChanged(_onAuth);
+      _showSign();  // Show auth overlay — onAuth will hide it after login
+    } catch(e) {
+      console.error('Firebase init error:', e);
+      if (_err()) _err().textContent = 'Firebase error: ' + e.message + '. Please reload.';
+      _showSign();  // Keep auth overlay — do NOT show dashboard
     }
   };
 
-  // ── Init ──────────────────────────────────────────────────────
-  const init = () => {
-    // Bind activity listeners (reset auto-lock on any interaction)
-    ['mousemove','mousedown','touchstart','keydown','scroll'].forEach(ev =>
-      document.addEventListener(ev, _onActivity, { passive: true })
-    );
-    document.addEventListener('keydown', _onKey);
-    // Show PIN overlay immediately
-    show();
-  };
-
-  return { init, show, lock, press, backspace, resetPin, exportEncrypted, importEncrypted, processImport };
+  return { init, signIn, signOut, saveAll, loadAll };
 })();
 
-// Start PIN security after all declarations are ready
-PinSecurity.init();
+// ── BOOT ─────────────────────────────────────────────────────────────
+ConsumerModule.loadCustomConsumers();
+SearchEngine.init();
+DriveSync.init();
+AgencyModule.applyToHeader();
+StockSnapshot.forceToday();
+ReconciliationModule.init();
+initDates();
+refresh();
 
+// Wait for ALL external scripts (Firebase CDN) to fully load before init
+// window 'load' event fires after every external resource is ready
+window.addEventListener('load', function() {
+  GasFirebase.init();
+});
 
 </script>
 </body>
